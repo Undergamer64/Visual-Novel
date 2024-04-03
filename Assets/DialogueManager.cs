@@ -10,7 +10,7 @@ public class DialogueManager : MonoBehaviour
     public GameObject textBox;
     public GameObject customButton;
     public GameObject optionPanel;
-    public bool isTalking = false;
+    public bool m_isTalking = false;
 
     static Story story;
     Text nametag;
@@ -75,8 +75,7 @@ public class DialogueManager : MonoBehaviour
             message.text += letter;
             yield return null;
         }
-        CharacterScript tempSpeaker = GameObject.FindObjectOfType<CharacterScript>();
-        if(tempSpeaker.isTalking)
+        if(EventManagerScript.instance.m_isTalking)
         {
             SetAnimation("idle");
         }
@@ -120,7 +119,7 @@ public class DialogueManager : MonoBehaviour
         {
             Destroy(optionPanel.transform.GetChild(i).gameObject);
         }
-        choiceSelected = null; // Forgot to reset the choiceSelected. Otherwise, it would select an option without player intervention.
+        choiceSelected = null;
         AdvanceDialogue();
     }
 
@@ -137,6 +136,9 @@ public class DialogueManager : MonoBehaviour
                 case "anim":
                     SetAnimation(param);
                     break;
+                case "scene":
+
+                    break;
                 case "color":
                     SetTextColor(param);
                     break;
@@ -145,8 +147,7 @@ public class DialogueManager : MonoBehaviour
     }
     void SetAnimation(string _name)
     {
-        CharacterScript cs = GameObject.FindObjectOfType<CharacterScript>();
-        cs.PlayAnimation(_name);
+        EventManagerScript.instance.PlayAnimation(_name);
     }
     void SetTextColor(string _color)
     {
@@ -166,6 +167,7 @@ public class DialogueManager : MonoBehaviour
                 break;
             default:
                 Debug.Log($"{_color} is not available as a text color");
+                message.color = Color.white;
                 break;
         }
     }
