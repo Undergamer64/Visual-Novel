@@ -124,9 +124,6 @@ public class DialogueManager : MonoBehaviour
         AdvanceDialogue();
     }
 
-    /*** Tag Parser ***/
-    /// In Inky, you can use tags which can be used to cue stuff in a game.
-    /// This is just one way of doing it. Not the only method on how to trigger events. 
     void ParseTags()
     {
         tags = story.currentTags;
