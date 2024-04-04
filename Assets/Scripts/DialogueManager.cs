@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using Ink.Runtime;
+using TMPro;
 
 public class DialogueManager : MonoBehaviour
 {
@@ -13,8 +14,8 @@ public class DialogueManager : MonoBehaviour
     public bool m_isTalking = false;
 
     static Story story;
-    Text nametag;
-    Text message;
+    TextMeshProUGUI nametag;
+    TextMeshProUGUI message;
     List<string> tags;
     static Choice choiceSelected;
 
@@ -22,8 +23,8 @@ public class DialogueManager : MonoBehaviour
     void Start()
     {
         story = new Story(inkFile.text);
-        nametag = textBox.transform.GetChild(0).GetComponent<Text>();
-        message = textBox.transform.GetChild(1).GetComponent<Text>();
+        nametag = textBox.transform.GetChild(0).GetComponent<TextMeshProUGUI>();
+        message = textBox.transform.GetChild(1).GetComponent<TextMeshProUGUI>();
         tags = new List<string>();
         choiceSelected = null;
     }
@@ -35,7 +36,6 @@ public class DialogueManager : MonoBehaviour
             //Is there more to the story?
             if(story.canContinue)
             {
-                nametag.text = "Phoenix";
                 AdvanceDialogue();
 
                 //Are there any choices?
@@ -85,16 +85,13 @@ public class DialogueManager : MonoBehaviour
     // Create then show the choices on the screen until one got selected
     IEnumerator ShowChoices()
     {
-        Debug.Log("There are choices need to be made here!");
         List<Choice> _choices = story.currentChoices;
-
         for (int i = 0; i < _choices.Count; i++)
         {
+            Debug.Log(_choices[i]);
             GameObject temp = Instantiate(customButton, optionPanel.transform);
-            temp.transform.GetChild(0).GetComponent<Text>().text = _choices[i].text;
-            temp.AddComponent<Selectable>();
+            temp.transform.GetChild(0).GetComponent<TextMeshProUGUI>().text = _choices[i].text;
             temp.GetComponent<Selectable>().element = _choices[i];
-            temp.GetComponent<Button>().onClick.AddListener(() => { temp.GetComponent<Selectable>().Decide(); });
         }
 
         optionPanel.SetActive(true);
@@ -105,9 +102,9 @@ public class DialogueManager : MonoBehaviour
     }
 
     // Tells the story which branch to go to
-    public static void SetDecision(object element)
+    public static void SetDecision(Choice element)
     {
-        choiceSelected = (Choice)element;
+        choiceSelected = element;
         story.ChooseChoiceIndex(choiceSelected.index);
     }
 
@@ -137,7 +134,6 @@ public class DialogueManager : MonoBehaviour
                     SetAnimation(param);
                     break;
                 case "scene":
-
                     break;
                 case "color":
                     SetTextColor(param);
