@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using Ink.Runtime;
 using TMPro;
+using UnityEngine.InputSystem;
 
 public class DialogueManager : MonoBehaviour
 {
@@ -19,22 +20,48 @@ public class DialogueManager : MonoBehaviour
     List<string> tags;
     static Choice choiceSelected;
 
+    [SerializeField]
+    private GameObject m_playerImage;
+
+    [SerializeField]
+    private List<Sprite> m_playerSprites = new List<Sprite>();
+
+    [Header("Sprites")]
+    [SerializeField]
+    private GameObject m_CharacterImage;
+
+    [SerializeField]
+    private List<Sprite> m_FrankSprites = new List<Sprite>();
+
+    [SerializeField]
+    private List<Sprite> m_DylanSprites = new List<Sprite>();
+
+    [SerializeField]
+    private List<Sprite> m_MarieSprites = new List<Sprite>();
+
+    [SerializeField]
+    private List<Sprite> m_AmberSprites = new List<Sprite>();
+
+    public Animator m_anim;
+
     // Start is called before the first frame update
     void Start()
     {
+        m_anim = GetComponent<Animator>();
         story = new Story(inkFile.text);
         nametag = textBox.transform.GetChild(0).GetComponent<TextMeshProUGUI>();
         message = textBox.transform.GetChild(1).GetComponent<TextMeshProUGUI>();
         tags = new List<string>();
         choiceSelected = null;
+        AdvanceDialogue();
     }
 
-    private void Update()
+    public void TextAction(InputAction.CallbackContext context)
     {
-        if(Input.GetKeyDown(KeyCode.Space))
+        if (context.started)
         {
             //Is there more to the story?
-            if(story.canContinue)
+            if (story.canContinue)
             {
                 AdvanceDialogue();
 
@@ -75,10 +102,6 @@ public class DialogueManager : MonoBehaviour
             message.text += letter;
             yield return null;
         }
-        if(EventManagerScript.instance.m_isTalking)
-        {
-            SetAnimation("idle");
-        }
         yield return null;
     }
 
@@ -92,6 +115,7 @@ public class DialogueManager : MonoBehaviour
             GameObject temp = Instantiate(customButton, optionPanel.transform);
             temp.transform.GetChild(0).GetComponent<TextMeshProUGUI>().text = _choices[i].text;
             temp.GetComponent<Selectable>().element = _choices[i];
+            temp.transform.position += Vector3.up * (i*120);
         }
 
         optionPanel.SetActive(true);
@@ -125,27 +149,165 @@ public class DialogueManager : MonoBehaviour
         tags = story.currentTags;
         foreach (string t in tags)
         {
-            string prefix = t.Split(' ')[0];
-            string param = t.Split(' ')[1];
+            string[] tag = t.Split(':');
 
-            switch(prefix.ToLower())
+            switch (tag[0].ToLower())
             {
-                case "anim":
-                    SetAnimation(param);
+                case "player":
+                    SetPlayerAnimation(tag[1]);
                     break;
-                case "scene":
+                case "character":
+                    SetCharacterAnimation(tag[1], tag[2]);
                     break;
                 case "color":
-                    SetTextColor(param);
+                    SetTextColor(tag[1]);
+                    break;
+                case "scene":
+                    ChangeBackGround(tag[1]);
+                    break;
+                default:
                     break;
             }
         }
     }
-    void SetAnimation(string _name)
+
+    private void SetPlayerAnimation(string _animation)
     {
-        EventManagerScript.instance.PlayAnimation(_name);
+        m_anim.SetBool("PlayerExist", true);
+        switch (_animation)
+        {
+            case "None":
+                m_anim.SetBool("PlayerExist", false);
+                break;
+            case "Idle":
+                m_playerImage.GetComponent<Image>().sprite = m_playerSprites[0];
+                break;
+            case "Happy":
+                m_playerImage.GetComponent<Image>().sprite = m_playerSprites[1];
+                break;
+            case "Doubtful":
+                m_playerImage.GetComponent<Image>().sprite = m_playerSprites[2];
+                break;
+            case "Embarrassed":
+                m_playerImage.GetComponent<Image>().sprite = m_playerSprites[4];
+                break;
+            case "Empathic":
+                m_playerImage.GetComponent<Image>().sprite = m_playerSprites[5];
+                break;
+            case "Annoyed":
+                m_playerImage.GetComponent<Image>().sprite = m_playerSprites[6];
+                break;
+            case "Surprised":
+                m_playerImage.GetComponent<Image>().sprite = m_playerSprites[7];
+                break;
+            case "Sad":
+                m_playerImage.GetComponent<Image>().sprite = m_playerSprites[8];
+                break;
+            case "FacePalm":
+                m_playerImage.GetComponent<Image>().sprite = m_playerSprites[9];
+                break;
+            default:
+                break;
+        }
     }
-    void SetTextColor(string _color)
+
+    private void SetCharacterAnimation(string _name, string _animation)
+    {
+        switch (_name)
+        {
+            case "Frank":
+                switch (_animation)
+                {
+                    case "idle":
+                        m_playerImage.GetComponent<Image>().sprite = m_FrankSprites[0];
+                        break;
+                    case "angry":
+                        m_playerImage.GetComponent<Image>().sprite = m_FrankSprites[1];
+                        break;
+                    case "embarrassed":
+                        m_playerImage.GetComponent<Image>().sprite = m_FrankSprites[2];
+                        break;
+                    case "talk":
+                        m_playerImage.GetComponent<Image>().sprite = m_FrankSprites[3];
+                        break;
+                }
+                break;
+            case "Dylan":
+                switch (_animation)
+                {
+                    case "idle":
+                        m_anim.SetTrigger("toIdle");
+                        break;
+                    case "angry":
+                        m_anim.SetTrigger("toAngry");
+                        break;
+                    case "embarrassed":
+                        m_anim.SetTrigger("toEmbarrassed");
+                        break;
+                    case "talk":
+                        m_isTalking = true;
+                        m_anim.SetTrigger("toTalk");
+                        break;
+                }
+                break;
+            case "Marie":
+                switch (_animation)
+                {
+                    case "idle":
+                        m_anim.SetTrigger("toIdle");
+                        break;
+                    case "angry":
+                        m_anim.SetTrigger("toAngry");
+                        break;
+                    case "embarrassed":
+                        m_anim.SetTrigger("toEmbarrassed");
+                        break;
+                    case "talk":
+                        m_isTalking = true;
+                        m_anim.SetTrigger("toTalk");
+                        break;
+                }
+                break;
+            case "Amber":
+                switch (_animation)
+                {
+                    case "idle":
+                        m_anim.SetTrigger("toIdle");
+                        break;
+                    case "angry":
+                        m_anim.SetTrigger("toAngry");
+                        break;
+                    case "embarrassed":
+                        m_anim.SetTrigger("toEmbarrassed");
+                        break;
+                    case "talk":
+                        m_isTalking = true;
+                        m_anim.SetTrigger("toTalk");
+                        break;
+                }
+                break;
+            case "None":
+
+                break;
+            default:
+                break;
+        }
+    }
+
+    public void ChangeBackGround(string _scene)
+    {
+        switch (_scene)
+        {
+            case "server":
+                m_anim.SetTrigger("server");
+                break;
+            default:
+                Debug.Log($"{_scene} is not available as a scene");
+                break;
+        }
+    }
+
+    private void SetTextColor(string _color)
     {
         switch(_color)
         {
