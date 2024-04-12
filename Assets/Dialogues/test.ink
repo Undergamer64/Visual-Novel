@@ -1,13 +1,20 @@
+#player : Idle
+#character : None : None
 Je m'introduis discrètement dans le bureau d’Amber, faisant bien attention de ne pas être vu. L’ordinateur illumine la pièce de lumière bleue, allumé et grand ouvert sur une bibliothèque de fichiers. “C'est comme s'ils voulaient que je les sabote” Je me penche sur l’ordinateur et examine les fichiers de plus près. Deux me semblent prometteurs.
 
+#scene : Corridor1
 Je supprime un dossier nommé “New Project” de l’ordinateur d’Amber.
 
 Le bruit de martèlement de talons aiguilles sur le parquet me fait sursauter et je m'écarte en vitesse de l’ordinateur. Amber rentre dans la pièce avec fracas.
 
+#character : Amber : Idle
 Amber :  “[player]? Que faites-vous ici ?”
 
+#player : Embarrassed
 [Player]: Quoi?
 
+#swap
+#character : Frank : Idle
 Amber: Quoi?
 
 La voix d’Amber semble hésiter entre la confusion et l’agacement.
