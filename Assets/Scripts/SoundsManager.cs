@@ -10,7 +10,7 @@ public class SoundsManager : MonoBehaviour
 
     // References
     [Header("References")]
-    [SerializeField] private AudioSource m_musicsPlayerAudioSource;
+    public AudioSource m_musicsPlayerAudioSource;
     [SerializeField] private AudioSource m_sfxPlayerAudioSource;
 
 
@@ -168,7 +168,7 @@ public class SoundsManager : MonoBehaviour
 
                 m_musicsPlayerAudioSource.Play();
 
-                m_musicsPlayerAudioSource.volume = _musicVolume * 1;
+                m_musicsPlayerAudioSource.volume = _musicVolume * SettingsManager.Instance.m_MainVolume;
 
                 yield return new WaitForSecondsRealtime(musicList[i].length);
             }

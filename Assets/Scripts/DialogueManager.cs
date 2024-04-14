@@ -5,6 +5,7 @@ using UnityEngine.UI;
 using Ink.Runtime;
 using TMPro;
 using UnityEngine.InputSystem;
+using System;
 
 public class DialogueManager : MonoBehaviour
 {
@@ -62,7 +63,22 @@ public class DialogueManager : MonoBehaviour
     private Sprite m_nextSprite;
     private Sprite m_nextBackground;
 
-    private bool m_canContinueToNextLine = false;
+    private bool m_canContinueToNextLine = true;
+    
+    private string m_playerName = "???";
+    private bool m_playerChoice = false;
+
+    [SerializeField]
+    private GameObject m_nameObject;
+
+    private int m_nbFrankHelp = 0;
+    private int m_nbSabotage = 0;
+
+    [SerializeField]
+    private GameObject m_feurEnding;
+
+    [SerializeField]
+    private GameObject m_mainMenuButton;
 
     private void Awake()
     {
@@ -77,8 +93,18 @@ public class DialogueManager : MonoBehaviour
         message = textBox.transform.GetChild(1).GetComponent<TextMeshProUGUI>();
         tags = new List<string>();
         choiceSelected = null;
-        StartCoroutine(SoundsManager.instance.PlayMusicEndlessly(SoundsManager.TypesOfMusics.LEVEL, 5));
+        StartCoroutine(SoundsManager.instance.PlayMusicEndlessly(SoundsManager.TypesOfMusics.LEVEL));
         AdvanceDialogue();
+    }
+
+    public void ConfirmeName()
+    {
+        string name = m_nameObject.transform.GetChild(0).GetComponent<TMP_InputField>().text;
+        if (name != "" && name != " ")
+        {
+            m_playerName = name;
+            nametag.text = name;
+        }
     }
 
     public void TextAction(InputAction.CallbackContext context)
@@ -86,20 +112,31 @@ public class DialogueManager : MonoBehaviour
         if (context.started)
         {
             //Is there more to the story?
-            if (story.canContinue && m_canContinueToNextLine)
+            if (story.canContinue && m_canContinueToNextLine && !m_playerChoice)
             {
                 AdvanceDialogue();
             }
         }
     }
 
+    public void OpenPauseMenu(InputAction.CallbackContext context)
+    {
+        if (context.started)
+        {
+            ButtonsManager.instance.Settings();
+        }
+    }
+
+
     // Advance through the story 
     void AdvanceDialogue()
     {
-        string currentSentence = story.Continue();
-        ParseTags();
-        StopAllCoroutines();
-        StartCoroutine(TypeSentence(currentSentence));
+        if (m_canContinueToNextLine)
+        {
+            string currentSentence = story.Continue();
+            ParseTags();
+            StartCoroutine(TypeSentence(currentSentence));
+        }
     }
 
     // Type out the sentence letter by letter and make character idle if they were talking
@@ -107,6 +144,7 @@ public class DialogueManager : MonoBehaviour
     {
         m_canContinueToNextLine = false;
         message.text = "";
+        bool player = false;
         foreach(char letter in sentence.ToCharArray())
         {
             /*
@@ -117,7 +155,29 @@ public class DialogueManager : MonoBehaviour
             }
             */
 
-            message.text += letter;
+            if (letter == '[')
+            {
+                player = true;
+                foreach (char playerLetter in m_playerName)
+                {
+                    message.text += playerLetter;
+                    yield return new WaitForSeconds(0.01f);
+                }
+            }
+
+            if (!player)
+            {
+                message.text += letter;
+            }
+            else if (letter == ']')
+            {
+                player = false;
+            }
+            else
+            {
+                continue;
+            }
+
             yield return new WaitForSeconds(0.01f);
         }
         m_canContinueToNextLine = true;
@@ -192,15 +252,57 @@ public class DialogueManager : MonoBehaviour
                 case "swap":
                     m_characterAnimation.SetBool("Swap", true);
                     break;
+                case "name":
+                    StartCoroutine(WaitForName());
+                    break;
+                case "Frank":
+                    m_nbFrankHelp += 1;
+                    break;
+                case "Sabotage":
+                    m_nbSabotage += 1;
+                    break;
+                case "Endings":
+                    if (m_nbFrankHelp >= 3)
+                    {
+                        story.ChoosePathString("SabotageEnding");
+                        story.Continue();
+                    }
+                    else if (m_nbSabotage >= 4)
+                    {
+                        story.ChoosePathString("SabotageEnding");
+                        story.Continue();
+                    }
+                    else
+                    {
+                        story.ChoosePathString("BadEnding");
+                        story.Continue();
+                    }
+                    break;
+                case "Feur":
+                    m_feurEnding.SetActive(true);
+                    m_mainMenuButton.SetActive(true);
+                    break;
+                case "End":
+                    m_mainMenuButton.SetActive(true);
+                    break;
                 default:
                     break;
             }
         }
     }
 
+    private IEnumerator WaitForName()
+    {
+        m_playerChoice = true;
+        m_nameObject.SetActive(true);
+        yield return new WaitUntil(() => { return m_playerName != "???"; });
+        m_nameObject.SetActive(false);
+        m_playerChoice = false;
+        yield return null;
+    }
+
     private void SetPlayerAnimation(string _animation)
     {
-        m_playerAnimation.SetBool("PlayerExist", true);
         switch (_animation)
         {
             case "None":
@@ -208,30 +310,43 @@ public class DialogueManager : MonoBehaviour
                 break;
             case "Idle":
                 m_playerImage.GetComponent<Image>().sprite = m_playerSprites[0];
+                m_playerAnimation.SetBool("PlayerExist", true);
                 break;
             case "Happy":
                 m_playerImage.GetComponent<Image>().sprite = m_playerSprites[1];
+                m_playerAnimation.SetBool("PlayerExist", true);
                 break;
             case "Doubtful":
                 m_playerImage.GetComponent<Image>().sprite = m_playerSprites[2];
+                m_playerAnimation.SetBool("PlayerExist", true);
                 break;
             case "Embarrassed":
                 m_playerImage.GetComponent<Image>().sprite = m_playerSprites[3];
+                m_playerAnimation.SetBool("PlayerExist", true);
+                break;
+            case "Embarrassed2":
+                m_playerImage.GetComponent<Image>().sprite = m_playerSprites[4];
+                m_playerAnimation.SetBool("PlayerExist", true);
                 break;
             case "Empathic":
-                m_playerImage.GetComponent<Image>().sprite = m_playerSprites[4];
+                m_playerImage.GetComponent<Image>().sprite = m_playerSprites[5];
+                m_playerAnimation.SetBool("PlayerExist", true);
                 break;
             case "Annoyed":
-                m_playerImage.GetComponent<Image>().sprite = m_playerSprites[5];
+                m_playerImage.GetComponent<Image>().sprite = m_playerSprites[6];
+                m_playerAnimation.SetBool("PlayerExist", true);
                 break;
             case "Surprised":
-                m_playerImage.GetComponent<Image>().sprite = m_playerSprites[6];
+                m_playerImage.GetComponent<Image>().sprite = m_playerSprites[7];
+                m_playerAnimation.SetBool("PlayerExist", true);
                 break;
             case "Sad":
-                m_playerImage.GetComponent<Image>().sprite = m_playerSprites[7];
+                m_playerImage.GetComponent<Image>().sprite = m_playerSprites[8];
+                m_playerAnimation.SetBool("PlayerExist", true);
                 break;
             case "FacePalm":
-                m_playerImage.GetComponent<Image>().sprite = m_playerSprites[8];
+                m_playerImage.GetComponent<Image>().sprite = m_playerSprites[9];
+                m_playerAnimation.SetBool("PlayerExist", true);
                 break;
             default:
                 break;
@@ -628,6 +743,10 @@ public class DialogueManager : MonoBehaviour
                 m_nextBackground = m_backgroundSprite[5];
                 m_transition.SetActive(true);
                 break;
+            case "None":
+                m_nextBackground = null;
+                m_transition.SetActive(true);
+                break;
             default:
                 Debug.Log($"{_scene} is not available as a scene");
                 break;
@@ -666,5 +785,13 @@ public class DialogueManager : MonoBehaviour
     public void BackgroundSwap()
     {
         m_background.GetComponent<Image>().sprite = m_nextBackground;
+        if (m_nextBackground == null)
+        {
+            m_background.GetComponent<Image>().color = Color.black;
+        }
+        else
+        {
+            m_background.GetComponent<Image>().color = Color.white;
+        }
     }
 }
